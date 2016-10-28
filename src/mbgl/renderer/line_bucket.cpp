@@ -10,19 +10,19 @@ namespace mbgl {
 
 using namespace style;
 
-LineBucket::LineBucket(uint32_t overscaling_) : overscaling(overscaling_) {
+LineBucket::LineBucket(LinePaintProperties::Evaluated properties, float z, uint32_t overscaling_)
+    : paintPropertyBinders(std::move(properties), z),
+      overscaling(overscaling_) {
 }
 
-LineBucket::~LineBucket() {
-    // Do not remove. header file only contains forward definitions to unique pointers.
-}
-
-void LineBucket::addGeometry(const GeometryCollection& geometryCollection) {
+void LineBucket::addFeature(const GeometryTileFeature& feature,
+                            const GeometryCollection& geometryCollection) {
     for (auto& line : geometryCollection) {
         addGeometry(line);
     }
-}
 
+    paintPropertyBinders.populateVertexVectors(feature, vertices.vertexSize());
+}
 
 /*
  * Sharp corners cause dashed lines to tilt because the distance along the line
@@ -375,7 +375,7 @@ void LineBucket::addCurrentVertex(const GeometryCoordinate& currentCoordinate,
     Point<double> extrude = normal;
     if (endLeft)
         extrude = extrude - (util::perp(normal) * endLeft);
-    vertices.emplace_back(LineAttributes::vertex(currentCoordinate, extrude, { round, false }, endLeft, distance * LINE_DISTANCE_SCALE));
+    vertices.emplace_back(LineProgram::layoutVertex(currentCoordinate, extrude, { round, false }, endLeft, distance * LINE_DISTANCE_SCALE));
     e3 = vertices.vertexSize() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
         triangleStore.emplace_back(e1, e2, e3);
@@ -386,7 +386,7 @@ void LineBucket::addCurrentVertex(const GeometryCoordinate& currentCoordinate,
     extrude = normal * -1.0;
     if (endRight)
         extrude = extrude - (util::perp(normal) * endRight);
-    vertices.emplace_back(LineAttributes::vertex(currentCoordinate, extrude, { round, true }, -endRight, distance * LINE_DISTANCE_SCALE));
+    vertices.emplace_back(LineProgram::layoutVertex(currentCoordinate, extrude, { round, true }, -endRight, distance * LINE_DISTANCE_SCALE));
     e3 = vertices.vertexSize() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
         triangleStore.emplace_back(e1, e2, e3);
@@ -411,7 +411,7 @@ void LineBucket::addPieSliceVertex(const GeometryCoordinate& currentVertex,
                                    std::size_t startVertex,
                                    std::vector<TriangleElement>& triangleStore) {
     Point<double> flippedExtrude = extrude * (lineTurnsLeft ? -1.0 : 1.0);
-    vertices.emplace_back(LineAttributes::vertex(currentVertex, flippedExtrude, { false, lineTurnsLeft }, 0, distance * LINE_DISTANCE_SCALE));
+    vertices.emplace_back(LineProgram::layoutVertex(currentVertex, flippedExtrude, { false, lineTurnsLeft }, 0, distance * LINE_DISTANCE_SCALE));
     e3 = vertices.vertexSize() - 1 - startVertex;
     if (e1 >= 0 && e2 >= 0) {
         triangleStore.emplace_back(e1, e2, e3);
@@ -427,6 +427,7 @@ void LineBucket::addPieSliceVertex(const GeometryCoordinate& currentVertex,
 void LineBucket::upload(gl::Context& context) {
     vertexBuffer = context.createVertexBuffer(std::move(vertices));
     indexBuffer = context.createIndexBuffer(std::move(triangles));
+    paintPropertyBinders.upload(context);
 
     // From now on, we're only going to render during the translucent pass.
     uploaded = true;

@@ -1,4 +1,5 @@
 #include <mbgl/style/layers/symbol_layer_impl.hpp>
+#include <mbgl/style/property_evaluation_parameters.hpp>
 #include <mbgl/style/bucket_parameters.hpp>
 #include <mbgl/layout/symbol_layout.hpp>
 #include <mbgl/renderer/bucket.hpp>
@@ -69,6 +70,7 @@ std::unique_ptr<SymbolLayout> SymbolLayer::Impl::createLayout(BucketParameters& 
                                           layer,
                                           filter,
                                           evaluated,
+                                          paint.evaluated,
                                           textMaxSize,
                                           *spriteAtlas);
 }

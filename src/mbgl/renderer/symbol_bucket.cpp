@@ -7,13 +7,16 @@ namespace mbgl {
 using namespace style;
 
 SymbolBucket::SymbolBucket(const MapMode mode_,
-                           style::SymbolLayoutProperties::Evaluated layout_,
+                           SymbolLayoutProperties::Evaluated layout_,
+                           SymbolPaintProperties::Evaluated paint,
+                           float zoom,
                            bool sdfIcons_,
                            bool iconsNeedLinear_)
     : mode(mode_),
       layout(std::move(layout_)),
       sdfIcons(sdfIcons_),
-      iconsNeedLinear(iconsNeedLinear_) {
+      iconsNeedLinear(iconsNeedLinear_),
+      paintPropertyBinders(paint, zoom) {
 }
 
 void SymbolBucket::upload(gl::Context& context) {
