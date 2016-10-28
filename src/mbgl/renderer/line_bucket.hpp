@@ -14,26 +14,29 @@ namespace mbgl {
 
 class LineBucket : public Bucket {
 public:
-    LineBucket(uint32_t overscaling);
-    ~LineBucket() override;
+    LineBucket(style::LinePaintProperties::Evaluated, float z, uint32_t overscaling);
 
     void upload(gl::Context&) override;
     void render(Painter&, PaintParameters&, const style::Layer&, const RenderTile&) override;
     bool hasData() const override;
 
-    void addGeometry(const GeometryCollection&);
-    void addGeometry(const GeometryCoordinates& line);
+    void addFeature(const GeometryTileFeature&,
+                    const GeometryCollection&);
 
     style::LineLayoutProperties::Evaluated layout;
 
-    gl::VertexVector<LineVertex> vertices;
+    gl::VertexVector<LineLayoutVertex> vertices;
     gl::IndexVector<gl::Triangles> triangles;
     gl::SegmentVector<LineAttributes> segments;
 
-    optional<gl::VertexBuffer<LineVertex>> vertexBuffer;
+    optional<gl::VertexBuffer<LineLayoutVertex>> vertexBuffer;
     optional<gl::IndexBuffer<gl::Triangles>> indexBuffer;
 
+    LineProgram::PaintPropertyBinders paintPropertyBinders;
+
 private:
+    void addGeometry(const GeometryCoordinates& line);
+
     struct TriangleElement {
         TriangleElement(uint16_t a_, uint16_t b_, uint16_t c_) : a(a_), b(b_), c(c_) {}
         uint16_t a, b, c;

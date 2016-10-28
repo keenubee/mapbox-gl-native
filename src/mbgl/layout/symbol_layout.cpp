@@ -35,6 +35,7 @@ SymbolLayout::SymbolLayout(std::vector<std::string> layerIDs_,
                            const GeometryTileLayer& layer,
                            const style::Filter& filter,
                            style::SymbolLayoutProperties::Evaluated layout_,
+                           style::SymbolPaintProperties::Evaluated paint_,
                            float textMaxSize_,
                            SpriteAtlas& spriteAtlas_)
     : layerIDs(std::move(layerIDs_)),
@@ -43,6 +44,7 @@ SymbolLayout::SymbolLayout(std::vector<std::string> layerIDs_,
       zoom(zoom_),
       mode(mode_),
       layout(std::move(layout_)),
+      paint(std::move(paint_)),
       textMaxSize(textMaxSize_),
       spriteAtlas(spriteAtlas_),
       tileSize(util::tileSize * overscaling_),
@@ -103,6 +105,8 @@ SymbolLayout::SymbolLayout(std::vector<std::string> layerIDs_,
 
         if (hasIcon) {
             ft.icon = util::replaceTokens(layout.get<IconImage>(), getValue);
+            ft.iconOffset = layout.get<IconOffset>().evaluate(zoom, *feature);
+            ft.iconRotation = layout.get<IconRotate>().evaluate(zoom, *feature) * util::DEG2RAD;
         }
 
         if (ft.text || ft.icon) {
@@ -209,14 +213,14 @@ void SymbolLayout::prepare(uintptr_t tileUID,
         if (feature.icon) {
             auto image = spriteAtlas.getImage(*feature.icon, SpritePatternMode::Single);
             if (image) {
-                shapedIcon = shapeIcon(*image, layout);
+                shapedIcon = shapeIcon(*image, feature);
                 assert((*image).spriteImage);
                 if ((*image).spriteImage->sdf) {
                     sdfIcons = true;
                 }
                 if ((*image).relativePixelRatio != 1.0f) {
                     iconsNeedLinear = true;
-                } else if (layout.get<IconRotate>() != 0) {
+                } else if (layout.get<IconRotate>().constantOr(1) != 0) {
                     iconsNeedLinear = true;
                 }
             }
@@ -350,7 +354,7 @@ bool SymbolLayout::anchorIsTooClose(const std::u16string& text, const float repe
 }
 
 std::unique_ptr<SymbolBucket> SymbolLayout::place(CollisionTile& collisionTile) {
-    auto bucket = std::make_unique<SymbolBucket>(mode, layout, sdfIcons, iconsNeedLinear);
+    auto bucket = std::make_unique<SymbolBucket>(mode, layout, paint, zoom, sdfIcons, iconsNeedLinear);
 
     // Calculate which labels can be shown and when they can be shown and
     // create the bufers used for rendering.
@@ -487,13 +491,13 @@ void SymbolLayout::addSymbols(Buffer &buffer, const SymbolQuads &symbols, float 
         uint8_t glyphAngle = std::round((symbol.glyphAngle / (M_PI * 2)) * 256);
 
         // coordinates (2 triangles)
-        buffer.vertices.emplace_back(SymbolAttributes::vertex(anchorPoint, tl, tex.x, tex.y,
+        buffer.vertices.emplace_back(SymbolLayoutAttributes::vertex(anchorPoint, tl, tex.x, tex.y,
                             minZoom, maxZoom, placementZoom, glyphAngle));
-        buffer.vertices.emplace_back(SymbolAttributes::vertex(anchorPoint, tr, tex.x + tex.w, tex.y,
+        buffer.vertices.emplace_back(SymbolLayoutAttributes::vertex(anchorPoint, tr, tex.x + tex.w, tex.y,
                             minZoom, maxZoom, placementZoom, glyphAngle));
-        buffer.vertices.emplace_back(SymbolAttributes::vertex(anchorPoint, bl, tex.x, tex.y + tex.h,
+        buffer.vertices.emplace_back(SymbolLayoutAttributes::vertex(anchorPoint, bl, tex.x, tex.y + tex.h,
                             minZoom, maxZoom, placementZoom, glyphAngle));
-        buffer.vertices.emplace_back(SymbolAttributes::vertex(anchorPoint, br, tex.x + tex.w, tex.y + tex.h,
+        buffer.vertices.emplace_back(SymbolLayoutAttributes::vertex(anchorPoint, br, tex.x + tex.w, tex.y + tex.h,
                             minZoom, maxZoom, placementZoom, glyphAngle));
 
         // add the two triangles, referencing the four coordinates we just inserted.

@@ -18,6 +18,8 @@ class SymbolBucket : public Bucket {
 public:
     SymbolBucket(const MapMode,
                  style::SymbolLayoutProperties::Evaluated,
+                 style::SymbolPaintProperties::Evaluated,
+                 float zoom,
                  bool sdfIcons,
                  bool iconsNeedLinear);
 
@@ -33,21 +35,23 @@ public:
     const bool sdfIcons;
     const bool iconsNeedLinear;
 
+    SymbolIconProgram::PaintPropertyBinders paintPropertyBinders;
+
     struct TextBuffer {
-        gl::VertexVector<SymbolVertex> vertices;
+        gl::VertexVector<SymbolLayoutVertex> vertices;
         gl::IndexVector<gl::Triangles> triangles;
         gl::SegmentVector<SymbolAttributes> segments;
 
-        optional<gl::VertexBuffer<SymbolVertex>> vertexBuffer;
+        optional<gl::VertexBuffer<SymbolLayoutVertex>> vertexBuffer;
         optional<gl::IndexBuffer<gl::Triangles>> indexBuffer;
     } text;
 
     struct IconBuffer {
-        gl::VertexVector<SymbolVertex> vertices;
+        gl::VertexVector<SymbolLayoutVertex> vertices;
         gl::IndexVector<gl::Triangles> triangles;
         gl::SegmentVector<SymbolAttributes> segments;
 
-        optional<gl::VertexBuffer<SymbolVertex>> vertexBuffer;
+        optional<gl::VertexBuffer<SymbolLayoutVertex>> vertexBuffer;
         optional<gl::IndexBuffer<gl::Triangles>> indexBuffer;
     } icon;
 

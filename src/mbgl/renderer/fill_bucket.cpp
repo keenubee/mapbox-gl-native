@@ -26,7 +26,12 @@ using namespace style;
 
 struct GeometryTooLongException : std::exception {};
 
-void FillBucket::addGeometry(const GeometryCollection& geometry) {
+FillBucket::FillBucket(FillPaintProperties::Evaluated properties, float z)
+    : paintPropertyBinders(std::move(properties), z) {
+}
+
+void FillBucket::addFeature(const GeometryTileFeature& feature,
+                            const GeometryCollection& geometry) {
     for (auto& polygon : classifyRings(geometry)) {
         // Optimize polygons with many interior rings for earcut tesselation.
         limitHoles(polygon, 500);
@@ -55,11 +60,11 @@ void FillBucket::addGeometry(const GeometryCollection& geometry) {
             assert(lineSegment.vertexLength <= std::numeric_limits<uint16_t>::max());
             uint16_t lineIndex = lineSegment.vertexLength;
 
-            vertices.emplace_back(FillAttributes::vertex(ring[0]));
+            vertices.emplace_back(FillProgram::layoutVertex(ring[0]));
             lines.emplace_back(lineIndex + nVertices - 1, lineIndex);
 
             for (uint32_t i = 1; i < nVertices; i++) {
-                vertices.emplace_back(FillAttributes::vertex(ring[i]));
+                vertices.emplace_back(FillProgram::layoutVertex(ring[i]));
                 lines.emplace_back(lineIndex + i - 1, lineIndex + i);
             }
 
@@ -89,12 +94,15 @@ void FillBucket::addGeometry(const GeometryCollection& geometry) {
         triangleSegment.vertexLength += totalVertices;
         triangleSegment.indexLength += nIndicies;
     }
+
+    paintPropertyBinders.populateVertexVectors(feature, vertices.vertexSize());
 }
 
 void FillBucket::upload(gl::Context& context) {
     vertexBuffer = context.createVertexBuffer(std::move(vertices));
     lineIndexBuffer = context.createIndexBuffer(std::move(lines));
     triangleIndexBuffer = context.createIndexBuffer(std::move(triangles));
+    paintPropertyBinders.upload(context);
 
     // From now on, we're going to render during the opaque and translucent pass.
     uploaded = true;
