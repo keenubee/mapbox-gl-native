@@ -9,7 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
  An `MGLStyleValue` object is a generic container for a style attribute value.
  The layout and paint attribute properties of `MGLStyleLayer` can be set to
  `MGLStyleValue` objects.
- 
+
  The `MGLStyleValue` class itself represents a class cluster. Under the hood, a
  particular `MGLStyleValue` object may be either an `MGLStyleConstantValue` to
  represent a constant value or an `MGLStyleFunction` to represent a value
@@ -41,6 +41,8 @@ MGL_EXPORT
  */
 + (instancetype)valueWithRawValue:(T)rawValue;
 
+#pragma mark Camera function values
+
 /**
  Creates and returns an `MGLStyleFunction` object representing a linear zoom
  level function with any number of stops.
@@ -50,6 +52,7 @@ MGL_EXPORT
  */
 + (instancetype)valueWithStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)stops;
 
+// TODO: deprecate in favor of the same API but with "exponentialStops"
 /**
  Creates and returns an `MGLStyleFunction` object representing a zoom level
  function with an exponential base and any number of stops.
@@ -59,6 +62,29 @@ MGL_EXPORT
  @return An `MGLStyleFunction` object with the given base and stops.
  */
 + (instancetype)valueWithBase:(CGFloat)base stops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)stops;
+
+// TODO: API docs
++ (instancetype)valueWithIntervalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)intervalStops;
+
+#pragma mark Source function values
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName categoricalStops:(NSDictionary<id, MGLStyleValue<T> *> *)categoricalStops defaultValue:(MGLStyleValue<T> * _Nullable)defaultValue;
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName exponentialStops:(NSDictionary<id, MGLStyleValue<T> *> *)exponentialStops;
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName base:(CGFloat)base exponentialStops:(NSDictionary<id, MGLStyleValue<T> *> *)exponentialStops;
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName intervalStops:(NSDictionary<id, MGLStyleValue<T> *> *)intervalStops;
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName;
+
+// TODO: API docs
++ (instancetype)valueWithAttributeName:(NSString *)attributeName compositeCategoricalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)categoricalStops;
 
 @end
 
@@ -174,6 +200,158 @@ MGL_EXPORT
  associated zoom level. An `MGLStyleFunction` object may not be used recursively
  as a stop value.
  */
+@property (nonatomic, copy) NSDictionary<NSNumber *, MGLStyleValue<T> *> *stops;
+
+@end
+
+/**
+ An `MGLStyleIntervalFunction` is a value function defining a style value that 
+ changes as the zoom level changes over a discrete domain. The layout and paint 
+ attribute properties of an `MGLStyleLayer` object can be set to 
+ `MGLStyleIntervalFunction` objects. Use a zoom level function to create the 
+ illusion of depth and control data density.
+
+ The `MGLStyleIntervalFunction` class takes a generic parameter `T` that indicates the
+ Foundation class being wrapped by this class.
+ */
+@interface MGLStyleIntervalFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Interval Function
+
+// TODO: API docs
++ (instancetype)functionWithIntervalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)intervalStops;
+
+#pragma mark Initializing a Style Interval Function
+
+// TODO: API docs
+- (instancetype)initWithIntervalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)intervalStops NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Interval Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSDictionary<NSNumber *, MGLStyleValue<T> *> *stops;
+
+@end
+
+//todo: break MGLStyleSourceFunction into SourceCategorical, SourceExponential, SourceInterval, and SourceIdentity
+
+// TODO: API docs
+@interface MGLStyleSourceCategoricalFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Source Categorical Function
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName categoricalStops:(NSDictionary<id, MGLStyleValue<T> *> *)categoricalStops defaultValue:(MGLStyleValue<T> * _Nullable)defaultValue;
+
+#pragma mark Initializing a Style Source Categorical Function
+
+// TODO: API docs
+- (instancetype)initWithAttributeName:(NSString *)attributeName categoricalStops:(NSDictionary<id, MGLStyleValue<T> *> *)categoricalStops defaultValue:(MGLStyleValue<T> * _Nullable)defaultValue NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Source Categorical Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSString *attributeName;
+
+// TODO: API docs
+@property (nonatomic, copy) NSDictionary<id, MGLStyleValue<T> *> *stops;
+
+// TODO: API docs
+@property (nonatomic, nullable) MGLStyleValue<T> *defaultValue;
+
+@end
+
+// TODO: API docs
+@interface MGLStyleSourceExponentialFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Source Exponential Function
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName exponentialStops:(NSDictionary<id, MGLStyleValue<T> *> *)exponentialStops;
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName base:(CGFloat)base exponentialStops:(NSDictionary<id, MGLStyleValue<T> *> *)exponentialStops;
+
+#pragma mark Initializing a Style Source Exponential Function
+
+// TODO: API docs
+- (instancetype)initWithAttributeName:(NSString *)attributeName base:(CGFloat)base exponentialStops:(NSDictionary<id, MGLStyleValue<T> *> *)exponentialStops NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Source Exponential Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSString *attributeName;
+
+// TODO: API docs
+@property (nonatomic) CGFloat base;
+
+// TODO: API docs
+@property (nonatomic, copy) NSDictionary<NSNumber *, MGLStyleValue<T> *> *stops;
+
+@end
+
+// TODO: API docs
+@interface MGLStyleSourceIntervalFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Source Interval Function
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName intervalStops:(NSDictionary<id, MGLStyleValue<T> *> *)intervalStops;
+
+#pragma mark Initializing a Style Source Interval Function
+
+// TODO: API docs
+- (instancetype)initWithAttributeName:(NSString *)attributeName intervalStops:(NSDictionary<id, MGLStyleValue<T> *> *)intervalStops NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Source Interval Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSString *attributeName;
+
+// TODO: API docs
+@property (nonatomic, copy) NSDictionary<NSNumber *, MGLStyleValue<T> *> *stops;
+
+@end
+
+// TODO: API docs
+@interface MGLStyleSourceIdentityFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Source Identity Function
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName;
+
+#pragma mark Initializing a Style Source Identity Function
+
+// TODO: API docs
+- (instancetype)initWithAttributeName:(NSString *)attributeName NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Source Identity Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSString *attributeName;
+
+@end
+
+// TODO: API docs
+@interface MGLStyleCompositeCategoricalFunction<T> : MGLStyleValue<T>
+
+#pragma mark Creating a Style Composite Categorical Function
+
+// TODO: API docs
++ (instancetype)functionWithAttributeName:(NSString *)attributeName compositeCategoricalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)categoricalStops;
+
+#pragma mark Initializing a Style Composite Categorical Function
+
+// TODO: API docs
+- (instancetype)initWithAttributeName:(NSString *)attributeName compositeCategoricalStops:(NSDictionary<NSNumber *, MGLStyleValue<T> *> *)categoricalStops NS_DESIGNATED_INITIALIZER;
+
+#pragma mark Accessing the Parameters of a Style Composite Categorical Function
+
+// TODO: API docs
+@property (nonatomic, copy) NSString *attributeName;
+
+// TODO: API docs
 @property (nonatomic, copy) NSDictionary<NSNumber *, MGLStyleValue<T> *> *stops;
 
 @end

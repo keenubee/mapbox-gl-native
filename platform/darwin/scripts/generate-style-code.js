@@ -388,6 +388,10 @@ var allPaintProperties = [];
 var allTypes = [];
 
 for (var layer of layers) {
+
+    // Ignore layers that are in the spec yet still not supported in mbgl core
+    if (layer.type === 'fill-extrusion') { continue; }
+
     allLayoutProperties.push(layer.layoutProperties);
     allPaintProperties.push(layer.paintProperties);
     allTypes.push(layer.type);

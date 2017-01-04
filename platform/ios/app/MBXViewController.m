@@ -189,6 +189,10 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
         }
         [self presentViewController:alertController animated:YES completion:nil];
     }
+
+    // Temp
+    NSURL *url = [[NSURL alloc] initWithString:@"mapbox://styles/boundsj/ciws3kslm00n82qqou2hnrow9"];
+    [self.mapView setStyleURL:url];
 }
 
 - (void)saveState:(__unused NSNotification *)notification
@@ -791,7 +795,7 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
 - (void)styleBuildingLayer
 {
     MGLFillStyleLayer *buildingLayer = (MGLFillStyleLayer *)[self.mapView.style layerWithIdentifier:@"building"];
-    buildingLayer.fillColor = [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor blackColor]];
+    buildingLayer.fillColor = [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor purpleColor]];
 }
 
 - (void)styleFerryLayer
@@ -1636,6 +1640,74 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
         }
         self.hudLabel.text = [NSString stringWithFormat:@"Visible: %ld  Queued: %ld", (unsigned long)mapView.visibleAnnotations.count, (unsigned long)queuedAnnotations];
     }
+}
+
+
+#warning remove this test implementation
+
+- (void)mapViewDidFinishLoadingMap:(MGLMapView *)mapView
+{
+    MGLCircleStyleLayer *circleLayer = (MGLCircleStyleLayer *)[self.mapView.style layerWithIdentifier:@"rgb-7q5w7f"];
+
+    // Data driven, constant ✔︎
+//     circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]];
+
+    // Data driven, camera exponential ✔︎
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithBase:1.0
+    //                                                            stops:@{ @0.0:  [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]],
+    //                                                                     @10.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]],
+    //                                                                     @15.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]] }];
+
+    // Data driven, camera interval ✔︎
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithIntervalStops:@{ @0.0:  [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]],
+    //                                                                              @12.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]],
+    //                                                                              @18.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor blueColor]] }];
+
+    // Data driven, source, categorical with string attribute key and default ✔︎
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"color"
+    //                                                          categoricalStops:@{ @"red": [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]]}
+    //                                                              defaultValue:[MGLStyleValue<UIColor *> valueWithRawValue:[UIColor yellowColor]]];
+
+    // Data driven, source, categorical with integer attribute key ✔︎
+//     circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"temp"
+//                                                              categoricalStops:@{ [NSNumber numberWithInt:0]:   [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]],
+//                                                                                  [NSNumber numberWithInt:100]: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor orangeColor]] }
+//                                                                  defaultValue:nil];
+
+    // Data driven, source, categorical with bool attribute key ✔︎
+    // circleLayer.circleBlur = [MGLStyleValue<NSNumber *> valueWithAttributeName:@"fuzzy"
+    //                                                          categoricalStops:@{ [NSNumber numberWithBool:@NO]:  [MGLStyleValue<NSNumber *> valueWithRawValue:[NSNumber numberWithDouble:2.0]],
+    //                                                                              [NSNumber numberWithBool:@YES]: [MGLStyleValue<NSNumber *> valueWithRawValue:[NSNumber numberWithDouble:2.0]] }
+    //                                                              defaultValue:nil];
+
+
+    // Data driven, source exponential (compiles and runs but it causes circles to not be drawn) ✖︎
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"special" exponentialStops:@{ @0.0:  [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]],
+    //                                                                                                          @15.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]] }];
+
+
+    // Data driven, source interval (compiles and runs but it causes circles to not be drawn) ✖︎
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"special" intervalStops: @{ @0.0:  [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]],
+    //                                                                                                         @12.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor greenColor]],
+    //                                                                                                        @18.0: [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor blueColor]] }];
+
+    // Data driven, source identity for both number and color ✔︎
+    // circleLayer.circleRadius = [MGLStyleValue<NSNumber *> valueWithAttributeName:@"size"];
+    // circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"hexColor"];
+
+    // a composite function that specifies that, at zoom level 0 - 8 the "red" attribute means the shape should be red and at zoom level 10 the "red" attribute means the shape should be blue. The default color will be yellow. ✔︎
+//    NSDictionary *compositeStops = @{ [NSNumber numberWithInt:0]: [MGLStyleValue<UIColor *> valueWithAttributeName:@"color"
+//                                                                                                  categoricalStops:@{@"red": [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]]}
+//                                                                                                      defaultValue:[MGLStyleValue<UIColor *> valueWithRawValue:[UIColor yellowColor]]],
+//                                      [NSNumber numberWithInt:8]: [MGLStyleValue<UIColor *> valueWithAttributeName:@"color"
+//                                                                                                   categoricalStops:@{@"red": [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor redColor]]}
+//                                                                                                       defaultValue:[MGLStyleValue<UIColor *> valueWithRawValue:[UIColor yellowColor]]],
+//                                      [NSNumber numberWithInt:10]: [MGLStyleValue<UIColor *> valueWithAttributeName:@"color"
+//                                                                                                  categoricalStops:@{@"red": [MGLStyleValue<UIColor *> valueWithRawValue:[UIColor blueColor]]}
+//                                                                                                      defaultValue:[MGLStyleValue<UIColor *> valueWithRawValue:[UIColor yellowColor]]],
+//                                      };
+
+//    circleLayer.circleColor = [MGLStyleValue<UIColor *> valueWithAttributeName:@"color" compositeCategoricalStops:compositeStops];
 }
 
 @end
