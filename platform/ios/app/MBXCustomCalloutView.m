@@ -17,6 +17,8 @@ static CGFloat const tipWidth = 10.0;
 }
 
 @synthesize representedObject = _representedObject;
+@synthesize automaticPositioning = _automaticPositioning;
+@synthesize staysOpen = _staysOpen;
 @synthesize leftAccessoryView = _leftAccessoryView;
 @synthesize rightAccessoryView = _rightAccessoryView;
 @synthesize delegate = _delegate;
@@ -64,6 +66,11 @@ static CGFloat const tipWidth = 10.0;
     {
         [self.delegate performSelector:@selector(calloutViewDidAppear:) withObject:self];
     }
+}
+
+- (void)setCenter:(CGPoint)center {
+    center.y = center.y - CGRectGetMidY(self.bounds);
+    [super setCenter:center];
 }
 
 - (void)dismissCalloutAnimated:(BOOL)animated

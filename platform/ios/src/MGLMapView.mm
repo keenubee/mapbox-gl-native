@@ -4558,21 +4558,30 @@ public:
                 || self.userTrackingMode == MGLUserTrackingModeNone
                 || self.userTrackingState != MGLUserTrackingStateChanged)
             {
-                // Deselect annotation if it lies outside the viewport
-                if (self.selectedAnnotation) {
-                    MGLAnnotationTag tag = [self annotationTagForAnnotation:self.selectedAnnotation];
-                    MGLAnnotationContext &annotationContext = _annotationContextsByAnnotationTag.at(tag);
-                    MGLAnnotationView *annotationView = annotationContext.annotationView;
-                    
-                    CGRect rect = [self positioningRectForCalloutForAnnotationWithTag:tag];
-                    
-                    if (annotationView)
-                    {
-                        rect = annotationView.frame;
-                    }
-                    
-                    if ( ! CGRectIntersectsRect(rect, self.frame)) {
-                        [self deselectAnnotation:self.selectedAnnotation animated:NO];
+                BOOL calloutViewStaysOpen = (self.calloutViewForSelectedAnnotation && self.calloutViewForSelectedAnnotation.staysOpen);
+                
+                if ( ! calloutViewStaysOpen)
+                {
+                    [self deselectAnnotation:self.selectedAnnotation animated:NO];
+                }
+                else
+                {
+                    // Deselect annotation if it lies outside the viewport
+                    if (self.selectedAnnotation) {
+                        MGLAnnotationTag tag = [self annotationTagForAnnotation:self.selectedAnnotation];
+                        MGLAnnotationContext &annotationContext = _annotationContextsByAnnotationTag.at(tag);
+                        MGLAnnotationView *annotationView = annotationContext.annotationView;
+                        
+                        CGRect rect = [self positioningRectForCalloutForAnnotationWithTag:tag];
+                        
+                        if (annotationView)
+                        {
+                            rect = annotationView.frame;
+                        }
+                        
+                        if ( ! CGRectIntersectsRect(rect, self.frame)) {
+                            [self deselectAnnotation:self.selectedAnnotation animated:NO];
+                        }
                     }
                 }
             }
@@ -4817,7 +4826,7 @@ public:
     UIView <MGLCalloutView> *calloutView = self.calloutViewForSelectedAnnotation;
     id <MGLAnnotation> annotation = calloutView.representedObject;
     
-    if (calloutView && annotation)
+    if (calloutView && annotation && calloutView.automaticPositioning)
     {
         MGLAnnotationTag tag = [self annotationTagForAnnotation:annotation];
         MGLAnnotationContext &annotationContext = _annotationContextsByAnnotationTag.at(tag);

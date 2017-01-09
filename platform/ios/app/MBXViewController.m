@@ -89,6 +89,8 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
 @end
 
 @interface MBXCustomCalloutAnnotation : MGLPointAnnotation
+@property (nonatomic, assign) BOOL automaticPositioning;
+@property (nonatomic, assign) BOOL staysOpen;
 @end
 
 @implementation MBXCustomCalloutAnnotation
@@ -699,12 +701,28 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
 {
     [self.mapView removeAnnotations:self.mapView.annotations];
 
-    MBXCustomCalloutAnnotation *annotation = [[MBXCustomCalloutAnnotation alloc] init];
-    annotation.coordinate = CLLocationCoordinate2DMake(48.8533940, 2.3775439);
-    annotation.title = @"Custom Callout";
+    MBXCustomCalloutAnnotation *firstAnnotation = [[MBXCustomCalloutAnnotation alloc] init];
+    firstAnnotation.coordinate = CLLocationCoordinate2DMake(48.8533940, 2.3775439);
+    firstAnnotation.title = @"Open w/ auto positioning";
+    firstAnnotation.automaticPositioning = YES;
+    firstAnnotation.staysOpen = YES;
+    
+    MBXCustomCalloutAnnotation *secondAnnotation = [[MBXCustomCalloutAnnotation alloc] init];
+    secondAnnotation.coordinate = CLLocationCoordinate2DMake(48.8543940, 2.3775439);
+    secondAnnotation.title = @"Open w/o automatic positioning";
+    secondAnnotation.automaticPositioning = NO;
+    secondAnnotation.staysOpen = YES;
 
-    [self.mapView addAnnotation:annotation];
-    [self.mapView showAnnotations:@[annotation] animated:YES];
+    MBXCustomCalloutAnnotation *thirdAnnotation = [[MBXCustomCalloutAnnotation alloc] init];
+    thirdAnnotation.coordinate = CLLocationCoordinate2DMake(48.8553940, 2.3775439);
+    thirdAnnotation.title = @"Closes";
+    thirdAnnotation.automaticPositioning = NO;
+    thirdAnnotation.staysOpen = NO;
+    
+    NSArray *annotations = @[firstAnnotation, secondAnnotation, thirdAnnotation];
+    [self.mapView addAnnotations:annotations];
+    
+    [self.mapView showAnnotations:annotations animated:YES];
 }
 
 - (void)styleWaterLayer
@@ -1582,8 +1600,12 @@ typedef NS_ENUM(NSInteger, MBXSettingsMiscellaneousRows) {
     if ([annotation respondsToSelector:@selector(title)]
         && [annotation isKindOfClass:[MBXCustomCalloutAnnotation class]])
     {
+        MBXCustomCalloutAnnotation *customAnnotation = (MBXCustomCalloutAnnotation *)annotation;
+        
         MBXCustomCalloutView *calloutView = [[MBXCustomCalloutView alloc] init];
         calloutView.representedObject = annotation;
+        calloutView.automaticPositioning = customAnnotation.automaticPositioning;
+        calloutView.staysOpen = customAnnotation.staysOpen;
         return calloutView;
     }
     return nil;

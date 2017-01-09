@@ -8,6 +8,16 @@
 }
 
 @synthesize representedObject = _representedObject;
+@synthesize automaticPositioning = _automaticPositioning;
+@synthesize staysOpen = _staysOpen;
+
+- (instancetype)init {
+    if (self = [super init]) {
+        _automaticPositioning = YES;
+        _staysOpen = YES;
+    }
+    return self;
+}
 
 + (instancetype)platformCalloutView
 {

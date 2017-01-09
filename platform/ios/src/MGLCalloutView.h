@@ -36,6 +36,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<MGLCalloutViewDelegate> delegate;
 
 /**
+ A Boolean value indicating whether the callout view should be positioned automatically.
+ The exact position can be adjusted by overriding -[UIView setCenter:]
+ */
+@property (nonatomic, assign) BOOL automaticPositioning;
+
+/**
+ A Boolean value indicating whether the callout view should be dismissed or not
+ when the map view changes viewport.
+ */
+@property (nonatomic, assign) BOOL staysOpen;
+
+/**
  Presents a callout view by adding it to `view` and pointing at the given rect
  of `view`’s bounds. Constrains the callout to the bounds of the given view.
  */
