@@ -60,7 +60,7 @@ void Painter::renderFill(PaintParameters& parameters,
                 *bucket.vertexBuffer,
                 indexBuffer,
                 segments,
-                bucket.paintPropertyBinders,
+                bucket.paintPropertyBinders.at(layer.getID()),
                 properties,
                 state.getZoom()
             );
@@ -104,7 +104,7 @@ void Painter::renderFill(PaintParameters& parameters,
                 *bucket.vertexBuffer,
                 indexBuffer,
                 segments,
-                bucket.paintPropertyBinders,
+                bucket.paintPropertyBinders.at(layer.getID()),
                 properties,
                 state.getZoom()
             );

@@ -6,6 +6,8 @@
 #include <mbgl/layout/symbol_layout.hpp>
 #include <mbgl/style/bucket_parameters.hpp>
 #include <mbgl/style/group_by_layout.hpp>
+#include <mbgl/style/filter.hpp>
+#include <mbgl/style/filter_evaluator.hpp>
 #include <mbgl/style/layers/symbol_layer.hpp>
 #include <mbgl/style/layers/symbol_layer_impl.hpp>
 #include <mbgl/renderer/symbol_bucket.hpp>
@@ -212,7 +214,7 @@ void GeometryTileWorker::redoLayout() {
     std::unordered_map<std::string, std::unique_ptr<SymbolLayout>> symbolLayoutMap;
     std::unordered_map<std::string, std::shared_ptr<Bucket>> buckets;
     auto featureIndex = std::make_unique<FeatureIndex>();
-    BucketParameters parameters { id, obsolete, *featureIndex, mode };
+    BucketParameters parameters { id, mode };
 
     std::vector<std::vector<const Layer*>> groups = groupByLayout(*layers);
     for (auto& group : groups) {
@@ -242,10 +244,25 @@ void GeometryTileWorker::redoLayout() {
             symbolLayoutMap.emplace(leader.getID(),
                 leader.as<SymbolLayer>()->impl->createLayout(parameters, *geometryLayer, layerIDs));
         } else {
-            std::shared_ptr<Bucket> bucket = leader.baseImpl->createBucket(parameters, *geometryLayer);
+            const Filter& filter = leader.baseImpl->filter;
+            const std::string& sourceLayerID = leader.baseImpl->sourceLayer;
+            std::shared_ptr<Bucket> bucket = leader.baseImpl->createBucket(parameters, group);
+
+            for (std::size_t i = 0; !obsolete && i < geometryLayer->featureCount(); i++) {
+                std::unique_ptr<GeometryTileFeature> feature = geometryLayer->getFeature(i);
+
+                if (!filter(feature->getType(), feature->getID(), [&] (const auto& key) { return feature->getValue(key); }))
+                    continue;
+
+                GeometryCollection geometries = feature->getGeometries();
+                bucket->addFeature(*feature, geometries);
+                featureIndex->insert(geometries, i, sourceLayerID, leader.getID());
+            }
+
             if (!bucket->hasData()) {
                 continue;
             }
+
             for (const auto& layer : group) {
                 buckets.emplace(layer->getID(), bucket);
             }

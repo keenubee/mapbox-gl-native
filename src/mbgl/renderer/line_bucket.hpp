@@ -12,16 +12,20 @@
 
 namespace mbgl {
 
+namespace style {
+class BucketParameters;
+} // namespace style
+
 class LineBucket : public Bucket {
 public:
-    LineBucket(style::LinePaintProperties::Evaluated, float z, uint32_t overscaling);
+    LineBucket(const style::BucketParameters&, const std::vector<const style::Layer*>&);
+
+    void addFeature(const GeometryTileFeature&,
+                    const GeometryCollection&) override;
+    bool hasData() const override;
 
     void upload(gl::Context&) override;
     void render(Painter&, PaintParameters&, const style::Layer&, const RenderTile&) override;
-    bool hasData() const override;
-
-    void addFeature(const GeometryTileFeature&,
-                    const GeometryCollection&);
 
     style::LineLayoutProperties::Evaluated layout;
 
@@ -32,7 +36,7 @@ public:
     optional<gl::VertexBuffer<LineLayoutVertex>> vertexBuffer;
     optional<gl::IndexBuffer<gl::Triangles>> indexBuffer;
 
-    LineProgram::PaintPropertyBinders paintPropertyBinders;
+    std::unordered_map<std::string, LineProgram::PaintPropertyBinders> paintPropertyBinders;
 
 private:
     void addGeometry(const GeometryCoordinates& line);

@@ -1,6 +1,8 @@
 #include <mbgl/renderer/line_bucket.hpp>
-#include <mbgl/style/layers/line_layer.hpp>
 #include <mbgl/renderer/painter.hpp>
+#include <mbgl/style/layers/line_layer.hpp>
+#include <mbgl/style/bucket_parameters.hpp>
+#include <mbgl/style/layers/line_layer_impl.hpp>
 #include <mbgl/util/math.hpp>
 #include <mbgl/util/constants.hpp>
 
@@ -10,9 +12,16 @@ namespace mbgl {
 
 using namespace style;
 
-LineBucket::LineBucket(LinePaintProperties::Evaluated properties, float z, uint32_t overscaling_)
-    : paintPropertyBinders(std::move(properties), z),
-      overscaling(overscaling_) {
+LineBucket::LineBucket(const BucketParameters& parameters, const std::vector<const Layer*>& layers)
+    : layout(layers.at(0)->as<LineLayer>()->impl->layout.evaluate(
+        PropertyEvaluationParameters(parameters.tileID.overscaledZ))),
+      overscaling(parameters.tileID.overscaleFactor()) {
+    for (const auto& layer : layers) {
+        paintPropertyBinders.emplace(layer->getID(),
+            LineProgram::PaintPropertyBinders(
+                layer->as<LineLayer>()->impl->paint.evaluated,
+                parameters.tileID.overscaledZ));
+    }
 }
 
 void LineBucket::addFeature(const GeometryTileFeature& feature,
@@ -21,7 +30,9 @@ void LineBucket::addFeature(const GeometryTileFeature& feature,
         addGeometry(line);
     }
 
-    paintPropertyBinders.populateVertexVectors(feature, vertices.vertexSize());
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.populateVertexVectors(feature, vertices.vertexSize());
+    }
 }
 
 /*
@@ -427,9 +438,11 @@ void LineBucket::addPieSliceVertex(const GeometryCoordinate& currentVertex,
 void LineBucket::upload(gl::Context& context) {
     vertexBuffer = context.createVertexBuffer(std::move(vertices));
     indexBuffer = context.createIndexBuffer(std::move(triangles));
-    paintPropertyBinders.upload(context);
 
-    // From now on, we're only going to render during the translucent pass.
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.upload(context);
+    }
+
     uploaded = true;
 }
 

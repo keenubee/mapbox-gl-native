@@ -34,7 +34,7 @@ void Painter::renderLine(PaintParameters& parameters,
             *bucket.vertexBuffer,
             *bucket.indexBuffer,
             bucket.segments,
-            bucket.paintPropertyBinders,
+            bucket.paintPropertyBinders.at(layer.getID()),
             properties,
             state.getZoom()
         );

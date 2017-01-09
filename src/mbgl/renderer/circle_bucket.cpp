@@ -1,24 +1,33 @@
 #include <mbgl/renderer/circle_bucket.hpp>
 #include <mbgl/renderer/painter.hpp>
-#include <mbgl/gl/context.hpp>
-
 #include <mbgl/programs/circle_program.hpp>
+#include <mbgl/style/bucket_parameters.hpp>
 #include <mbgl/style/layers/circle_layer.hpp>
+#include <mbgl/style/layers/circle_layer_impl.hpp>
 #include <mbgl/util/constants.hpp>
 
 namespace mbgl {
 
 using namespace style;
 
-CircleBucket::CircleBucket(CirclePaintProperties::Evaluated properties, float z, MapMode mode_)
-    : paintPropertyBinders(std::move(properties), z),
-      mode(mode_) {
+CircleBucket::CircleBucket(const BucketParameters& parameters, const std::vector<const Layer*>& layers)
+    : mode(parameters.mode) {
+    for (const auto& layer : layers) {
+        paintPropertyBinders.emplace(layer->getID(),
+            CircleProgram::PaintPropertyBinders(
+                layer->as<CircleLayer>()->impl->paint.evaluated,
+                parameters.tileID.overscaledZ));
+    }
 }
 
 void CircleBucket::upload(gl::Context& context) {
     vertexBuffer = context.createVertexBuffer(std::move(vertices));
     indexBuffer = context.createIndexBuffer(std::move(triangles));
-    paintPropertyBinders.upload(context);
+
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.upload(context);
+    }
+
     uploaded = true;
 }
 
@@ -81,7 +90,9 @@ void CircleBucket::addFeature(const GeometryTileFeature& feature,
         }
     }
 
-    paintPropertyBinders.populateVertexVectors(feature, vertices.vertexSize());
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.populateVertexVectors(feature, vertices.vertexSize());
+    }
 }
 
 } // namespace mbgl

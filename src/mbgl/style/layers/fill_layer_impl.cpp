@@ -1,5 +1,4 @@
 #include <mbgl/style/layers/fill_layer_impl.hpp>
-#include <mbgl/style/bucket_parameters.hpp>
 #include <mbgl/renderer/fill_bucket.hpp>
 #include <mbgl/geometry/feature_index.hpp>
 #include <mbgl/util/math.hpp>
@@ -36,16 +35,8 @@ bool FillLayer::Impl::evaluate(const PropertyEvaluationParameters& parameters) {
     return paint.hasTransition();
 }
 
-std::unique_ptr<Bucket> FillLayer::Impl::createBucket(BucketParameters& parameters, const GeometryTileLayer& layer) const {
-    auto bucket = std::make_unique<FillBucket>(paint.evaluated, parameters.tileID.overscaledZ);
-
-    parameters.eachFilteredFeature(filter, layer, [&] (const auto& feature, std::size_t index, const std::string& layerName) {
-        auto geometries = feature.getGeometries();
-        bucket->addFeature(feature, geometries);
-        parameters.featureIndex.insert(geometries, index, layerName, id);
-    });
-
-    return std::move(bucket);
+std::unique_ptr<Bucket> FillLayer::Impl::createBucket(const BucketParameters& parameters, const std::vector<const Layer*>& layers) const {
+    return std::make_unique<FillBucket>(parameters, layers);
 }
 
 float FillLayer::Impl::getQueryRadius() const {

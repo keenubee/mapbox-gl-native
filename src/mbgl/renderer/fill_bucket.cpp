@@ -1,8 +1,9 @@
 #include <mbgl/renderer/fill_bucket.hpp>
-#include <mbgl/style/layers/fill_layer.hpp>
 #include <mbgl/renderer/painter.hpp>
 #include <mbgl/programs/fill_program.hpp>
-#include <mbgl/util/logging.hpp>
+#include <mbgl/style/bucket_parameters.hpp>
+#include <mbgl/style/layers/fill_layer.hpp>
+#include <mbgl/style/layers/fill_layer_impl.hpp>
 
 #include <mapbox/earcut.hpp>
 
@@ -26,8 +27,13 @@ using namespace style;
 
 struct GeometryTooLongException : std::exception {};
 
-FillBucket::FillBucket(FillPaintProperties::Evaluated properties, float z)
-    : paintPropertyBinders(std::move(properties), z) {
+FillBucket::FillBucket(const BucketParameters& parameters, const std::vector<const Layer*>& layers) {
+    for (const auto& layer : layers) {
+        paintPropertyBinders.emplace(layer->getID(),
+            FillProgram::PaintPropertyBinders(
+                layer->as<FillLayer>()->impl->paint.evaluated,
+                parameters.tileID.overscaledZ));
+    }
 }
 
 void FillBucket::addFeature(const GeometryTileFeature& feature,
@@ -95,16 +101,20 @@ void FillBucket::addFeature(const GeometryTileFeature& feature,
         triangleSegment.indexLength += nIndicies;
     }
 
-    paintPropertyBinders.populateVertexVectors(feature, vertices.vertexSize());
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.populateVertexVectors(feature, vertices.vertexSize());
+    }
 }
 
 void FillBucket::upload(gl::Context& context) {
     vertexBuffer = context.createVertexBuffer(std::move(vertices));
     lineIndexBuffer = context.createIndexBuffer(std::move(lines));
     triangleIndexBuffer = context.createIndexBuffer(std::move(triangles));
-    paintPropertyBinders.upload(context);
 
-    // From now on, we're going to render during the opaque and translucent pass.
+    for (auto& pair : paintPropertyBinders) {
+        pair.second.upload(context);
+    }
+
     uploaded = true;
 }
 

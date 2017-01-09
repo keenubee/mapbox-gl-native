@@ -1,6 +1,5 @@
 #include <mbgl/style/layers/line_layer_impl.hpp>
 #include <mbgl/style/property_evaluation_parameters.hpp>
-#include <mbgl/style/bucket_parameters.hpp>
 #include <mbgl/renderer/line_bucket.hpp>
 #include <mbgl/geometry/feature_index.hpp>
 #include <mbgl/util/math.hpp>
@@ -29,18 +28,8 @@ bool LineLayer::Impl::evaluate(const PropertyEvaluationParameters& parameters) {
     return paint.hasTransition();
 }
 
-std::unique_ptr<Bucket> LineLayer::Impl::createBucket(BucketParameters& parameters, const GeometryTileLayer& layer) const {
-    auto bucket = std::make_unique<LineBucket>(paint.evaluated, parameters.tileID.overscaledZ, parameters.tileID.overscaleFactor());
-
-    bucket->layout = layout.evaluate(PropertyEvaluationParameters(parameters.tileID.overscaledZ));
-
-    parameters.eachFilteredFeature(filter, layer, [&] (const auto& feature, std::size_t index, const std::string& layerName) {
-        auto geometries = feature.getGeometries();
-        bucket->addFeature(feature, geometries);
-        parameters.featureIndex.insert(geometries, index, layerName, id);
-    });
-
-    return std::move(bucket);
+std::unique_ptr<Bucket> LineLayer::Impl::createBucket(const BucketParameters& parameters, const std::vector<const Layer*>& layers) const {
+    return std::make_unique<LineBucket>(parameters, layers);
 }
 
 float LineLayer::Impl::getLineWidth() const {
